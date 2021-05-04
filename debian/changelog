@@ -3,6 +3,11 @@ linuxmuster-base7 (9.0.81-0ubuntu0) bionic; urgency=low
   * Add multi school functinality
 
  -- Dorian Zedler <dorian@itsblue.de>  Tue, 13 Apr 2021 15:09:31 +0100
+linuxmuster-base7 (7.0.82-0ubuntu0) lmn7; urgency=low
+
+  * merge #117: Add functionality for multi-school installations.
+
+ -- Thomas Schmitt <thomas@linuxmuster.net>  Mon, 26 Apr 2021 16:29:00 +0200
 
 linuxmuster-base7 (7.0.81-0ubuntu0) lmn7; urgency=low
 
