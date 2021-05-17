@@ -13,9 +13,11 @@ import subprocess
 import sys
 import time
 import getopt
+import shutil
 
 from os import listdir
 from os.path import isfile, join
+from pathlib import Path
 
 from functions import getBootImage, getDevicesArray, getGrubOstype, getGrubPart
 from functions import getSetupValue, getStartconfOsValues, getStartconfOption
@@ -278,13 +280,70 @@ def writeDhcpDevicesConfig(school='default-school'):
     except Exception as error:
         print(error)
         return False
+
+# Create necessary host-based symlinks
+def doSchoolSpecificGroupLinksAndGetPxeGroups(school='default-school'):
+    pxe_groups = []
+
+    # first empty, then create school-specific directories
+    grubLinkSchoolDir = constants.LINBODIR + "/boot/links/grub/" + school
+    startConfLinkSchoolDir = constants.LINBODIR + "/boot/links/startConf/" + school
+
+    shutil.rmtree(grubLinkSchoolDir, ignore_errors=True)
+    shutil.rmtree(startConfLinkSchoolDir, ignore_errors=True)
+
+    Path(startConfLinkSchoolDir).mkdir(parents=True)
+    Path(grubLinkSchoolDir).mkdir(parents=True)
+
+    for device_array in getDevicesArray(fieldnrs='1,2,3,4,10', subnet='all', pxeflag='1,2,3', school=school):
+        host, group, mac, ip, pxeflag = device_array
+        # collect groups with pxe for later use
+        if group not in pxe_groups:
+            pxe_groups.append(group)
+
+        # format row in columns for output
+        printScript("  {: <15} | {: <15}".format(host, group))
+
+        groupconf = constants.LINBODIR + '/start.conf.' + group
+        hostlink = startConfLinkSchoolDir + '/start.conf-'
+        if ip == 'DHCP':
+            hostlink += mac.lower()
+        else:
+            hostlink += ip
+        
+        # Linbo config
+        if not os.path.isfile(hostlink):
+            os.symlink(groupconf, hostlink)
+
+        # Grub config
+        groupconf = constants.LINBOGRUBDIR + '/' + group + '.cfg'
+        hostlink = grubLinkSchoolDir + '/' + host + '.cfg'
+        if not os.path.isfile(hostlink):
+            os.symlink(groupconf, hostlink)
+
+    return pxe_groups
+
+
+# look up all links of all schools and place them in the correct place
+def doAllGroupLinks():
+    # delete old config links
+    os.system('find ' + constants.LINBODIR + ' -maxdepth 1 -name start.conf-\* -type l -exec rm {} \;')
+    os.system('find ' + constants.LINBOGRUBDIR + '/hostcfg -maxdepth 1 -name \*.cfg -type l -exec rm {} \;')
+
+    for linkType in listdir(constants.LINBODIR + "/boot/links"):
+        linkTypeDir = constants.LINBODIR + "/boot/links/" + linkType
+        for school in listdir(linkTypeDir):
+            schoolDir = linkTypeDir + "/" + school
+            for linkName in listdir(schoolDir):
+                linkSource = os.path.realpath(schoolDir + "/" + linkName)
+                if linkType == "startConf":
+                    linkTarget = constants.LINBODIR + "/"
+                else:
+                    linkTarget = constants.LINBOGRUBDIR + '/hostcfg/'
+                
+                os.symlink(linkSource, linkTarget + linkName)
+
 # functions end
-
-
-# delete old config links
-# start.conf-ip
-os.system('find ' + constants.LINBODIR + ' -name start.conf-\* -type l -exec rm {} \;')
-os.system('find ' + constants.LINBOGRUBDIR + '/hostcfg -name \*.cfg -type l -exec rm {} \;')
 
 
 # write dhcp devices.conf
@@ -294,29 +353,10 @@ writeDhcpDevicesConfig(school=school)
 # linbo stuff
 printScript('', 'begin')
 printScript('Working on linbo/grub configuration for devices:')
-pxe_groups = []
-for device_array in getDevicesArray(fieldnrs='1,2,3,4,10', subnet='all', pxeflag='1,2,3', school=school):
-    host, group, mac, ip, pxeflag = device_array
-    # collect groups with pxe for later use
-    if group not in pxe_groups:
-        pxe_groups.append(group)
-    # format row in columns for output
-    row = [host, group]
-    printScript("  {: <15} | {: <15}".format(*row))
-    groupconf = 'start.conf.' + group
-    hostlink = constants.LINBODIR + '/start.conf-'
-    if ip == 'DHCP':
-        hostlink = hostlink + mac.lower()
-    else:
-        hostlink = hostlink + ip
-    if not os.path.isfile(hostlink):
-        os.system('ln -sf ' + groupconf + ' ' + hostlink)
-    # grub config
-    groupconf = '../' + group + '.cfg'
-    hostlink = constants.LINBOGRUBDIR + '/hostcfg/' + host + '.cfg'
-    if not os.path.isfile(hostlink):
-        os.system('ln -sf ' + groupconf + ' ' + hostlink)
+pxe_groups = doSchoolSpecificGroupLinksAndGetPxeGroups(school=school)
 
+# resolve all links and place them
+doAllGroupLinks()
 
 # write pxe configs for collected groups
 printScript('', 'begin')
