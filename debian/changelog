@@ -1,3 +1,9 @@
+linuxmuster-base7 (9.0.84) bionic; urgency=low
+
+  * Fix multi school functinality for group links
+
+ -- Dorian Zedler <dorian@itsblue.de>  Mon, 17 May 2021 17:02:31 +0100
+
 linuxmuster-base7 (9.0.83-0ubuntu0) bionic; urgency=low
 
   * Fix multi school functinality for dhcp
