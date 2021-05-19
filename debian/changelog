@@ -1,3 +1,9 @@
+linuxmuster-base7 (9.0.86) bionic; urgency=low
+
+  * Fix creation of /srv/linbo/boot/links
+
+ -- Dorian Zedler <dorian@itsblue.de>  Tue, 19 May 2021 16:33:31 +0100
+
 linuxmuster-base7 (9.0.85) bionic; urgency=low
 
   * Some small refactoring
