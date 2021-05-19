@@ -299,7 +299,9 @@ def doSchoolSpecificGroupLinksAndGetPxeGroups(school='default-school'):
     pxe_groups = []
 
     # clean up
-    linksFile = constants.LINBODIR + "/boot/links/" + school + ".csv"
+    linksFileBasepath = constants.LINBODIR + "/boot/links"
+    Path(linksFileBasepath).mkdir(parents=True, exist_ok=True)
+    linksFile = linksFileBasepath + "/" + school + ".csv"
     if os.path.isfile(linksFile):
         os.unlink(linksFile)
 
