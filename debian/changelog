@@ -31,8 +31,12 @@ linuxmuster-base7 (9.0.81-0ubuntu0) bionic; urgency=low
 linuxmuster-base7 (7.0.82-0ubuntu0) lmn7; urgency=low
 
   * merge #117: Add functionality for multi-school installations.
+  * merge #119: Fix dhcp in multi schools and add maintenance table.
+  * fix #122: Error in import-devices.
+  * replace os.system with subprocess in linuxmuster-import-devices (#121).
+  * Fix #118: Remove linux-login.script.
 
- -- Thomas Schmitt <thomas@linuxmuster.net>  Mon, 26 Apr 2021 16:29:00 +0200
+ -- Thomas Schmitt <thomas@linuxmuster.net>  Wed, 09 Jun 2021 13:49:08 +0000
 
 linuxmuster-base7 (7.0.81-0ubuntu0) lmn7; urgency=low
 

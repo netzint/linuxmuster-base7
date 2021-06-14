@@ -2,7 +2,7 @@
 #
 # linuxmuster-import-devices
 # thomas@linuxmuster.net
-# 20200708
+# 20210609
 #
 
 import configparser
@@ -65,14 +65,14 @@ printScript(os.path.basename(__file__), 'begin')
 # do sophomorix-devices first
 msg = 'Starting sophomorix-device syntax check:'
 printScript(msg)
-result = os.system('sophomorix-device --dry-run')
+result = subprocess.check_call('sophomorix-device --dry-run', shell=True)
 msg = 'sophomorix-device finished '
 if result != 0:
     printScript(msg + ' errors detected!')
     sys.exit(result)
 
 printScript(msg + ' OK!')
-os.system('sophomorix-device --sync')
+subprocess.call('sophomorix-device --sync', shell=True)
 
 
 # functions begin
@@ -91,7 +91,7 @@ def doGrubCfg(startconf, group, kopts):
     # if cache is not defined provide a forced netboot cfg
     if cacheroot is None:
         netboottpl = constants.LINBOTPLDIR + '/grub.cfg.forced_netboot'
-        os.system('cp ' + netboottpl + ' ' + grubcfg)
+        subprocess.call('cp ' + netboottpl + ' ' + grubcfg, shell=True)
         return 'not yet configured!'
     # create return message
     if os.path.isfile(grubcfg):
@@ -149,7 +149,7 @@ def doLinboStartconf(group):
             msg1 = 'present'
     else:
         msg1 = 'not yet configured!'
-        os.system('cp ' + constants.LINBODIR + '/start.conf ' + startconf)
+        subprocess.call('cp ' + constants.LINBODIR + '/start.conf ' + startconf, shell=True)
     # read values from start.conf
     group_s = getStartconfOption(startconf, 'LINBO', 'Group')
     serverip_s = getStartconfOption(startconf, 'LINBO', 'Server')
@@ -200,12 +200,12 @@ def doOpsi():
     sshcmd = 'ssh -oNumberOfPasswordPrompts=0 -oStrictHostKeyChecking=no'
     rsynccmd = 'rsync -e "' + sshcmd + '"'
     # upload workstations file
-    os.system(rsynccmd + ' ' + constants.WIMPORTDATA + ' ' + opsiip + ':' + constants.OPSIWSDATA)
+    subprocess.call(rsynccmd + ' ' + constants.WIMPORTDATA + ' ' + opsiip + ':' + constants.OPSIWSDATA, shell=True)
     # execute script
-    os.system(sshcmd + ' ' + opsiip + ' ' + constants.OPSIWSIMPORT + ' --quiet')
+    subprocess.call(sshcmd + ' ' + opsiip + ' ' + constants.OPSIWSIMPORT + ' --quiet', shell=True)
     # download opsi host keys
-    os.system(rsynccmd + ' ' + opsiip + ':' + constants.OPSIPCKEYS + ' ' + constants.LINBOOPSIKEYS)
-    os.system('chmod 600 ' + constants.LINBOOPSIKEYS)
+    subprocess.call(rsynccmd + ' ' + opsiip + ':' + constants.OPSIPCKEYS + ' ' + constants.LINBOOPSIKEYS, shell=True)
+    subprocess.call('chmod 600 ' + constants.LINBOOPSIKEYS, shell=True)
 
 
 # write dhcp subnet devices config
@@ -285,6 +285,7 @@ def writeDhcpDevicesConfig(school='default-school'):
                     # finallý write host declaration
                     outfile.write(host_decl)
     
+
         # open devices.conf for append
         with open(baseConfigFilePath, 'a') as outfile:
             for devicesConf in listdir(devicesConfigBasedir):
@@ -338,8 +339,8 @@ def doSchoolSpecificGroupLinksAndGetPxeGroups(school='default-school'):
 # look up all links for all schools and place them in the correct place
 def doAllGroupLinks():
     # delete old config links
-    os.system('find ' + constants.LINBODIR + ' -maxdepth 1 -name start.conf-\* -type l -exec rm {} \;')
-    os.system('find ' + constants.LINBOGRUBDIR + '/hostcfg -maxdepth 1 -name \*.cfg -type l -exec rm {} \;')
+    subprocess.call(['find', constants.LINBODIR, '-maxdepth', '1', '-name', 'start.conf-*', '-type', 'l', '-exec', 'rm', '{}', ';'])
+    subprocess.call(['find', constants.LINBOGRUBDIR + '/hostcfg', '-maxdepth', '1', '-name', '*.cfg', '-type', 'l', '-exec', 'rm', '{}', ';'])
 
     linksConfBasedir = constants.LINBODIR + "/boot/links"
     for schoolLinksConf in listdir(linksConfBasedir):
@@ -398,22 +399,19 @@ if len(hookscripts) > 0:
 # restart services
 printScript('', 'begin')
 printScript('Restarting services:')
-services = ['isc-dhcp-server', 'linbo-bittorrent', 'linbo-multicast']
-for service in services:
-    os.system('service ' + service + ' stop')
-    os.system('service ' + service + ' start')
+service = 'isc-dhcp-server'
+subprocess.call('service ' + service + ' restart', shell=True)
 # wait one second before service check
 time.sleep(1)
 rc = 0
-for service in services:
-    msg = '* ' + service + ' '
-    printScript(msg, '', False, False, True)
-    state = os.system('systemctl is-active --quiet ' + service)
-    if state == 0:
-        printScript(' OK!', '', True, True, False, len(msg))
-    else:
-        printScript(' Failed!', '', True, True, False, len(msg))
-        rc = 1
+msg = '* ' + service + ' '
+printScript(msg, '', False, False, True)
+state = subprocess.check_call('systemctl is-active --quiet ' + service, shell=True)
+if state == 0:
+    printScript(' OK!', '', True, True, False, len(msg))
+else:
+    printScript(' Failed!', '', True, True, False, len(msg))
+    rc = 1
 
 # end message
 printScript(os.path.basename(__file__), 'end')
