@@ -1,3 +1,9 @@
+linuxmuster-base7 (9.0.87) bionic; urgency=low
+
+  * Import changes from upstream
+
+ -- Dorian Zedler <dorian@itsblue.de>  Tue, 14 Jun 2021 16:33:31 +0100
+
 linuxmuster-base7 (9.0.86) bionic; urgency=low
 
   * Fix creation of /srv/linbo/boot/links
