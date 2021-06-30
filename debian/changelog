@@ -1,4 +1,4 @@
-linuxmuster-base7 (9.0.88) bionic; urgency=low
+linuxmuster-base7 (9.0.88-release) bionic; urgency=low
 
   * Fix problems with device specific links
 
